@@ -1,4 +1,9 @@
-import {model, property, repository} from '@loopback/repository';
+import {
+  IsolationLevel,
+  model,
+  property,
+  repository,
+} from '@loopback/repository';
 import {PasswordHasher, validateCredentials} from '../services';
 import {
   get,
@@ -32,6 +37,7 @@ import {
   RefreshTokenService,
   RefreshTokenServiceBindings,
 } from '@loopback/authentication-jwt';
+import {UserRole} from '../constants/role';
 
 @model()
 export class NewUserRequest extends User {
@@ -136,8 +142,100 @@ export class UserController {
 
       return savedUser;
     } catch (error) {
-      // MongoError 11000 duplicate key
-      if (error.code === 11000 && error.errmsg.includes('index: uniqueEmail')) {
+      // PostgreSQL unique_violation error
+      if (error.code === '23505' && error.message.includes('uniqueEmail')) {
+        throw new HttpErrors.Conflict('Email value is already taken');
+      } else {
+        throw error;
+      }
+    }
+  }
+
+  @post('/users/sign-up/agency', {
+    responses: {
+      '200': {
+        description: 'User',
+        content: {
+          'application/json': {
+            schema: {
+              'x-ts-type': User,
+            },
+          },
+        },
+      },
+    },
+  })
+  @authenticate('jwt')
+  @authorize({
+    allowedRoles: [UserRole.Admin],
+    voters: [basicAuthorization],
+  })
+  async createAgency(
+    @inject(SecurityBindings.USER)
+    currentUserProfile: UserProfile,
+    @requestBody({
+      description: 'Credentials',
+      required: true,
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            required: ['email', 'password'],
+            properties: {
+              email: {type: 'string', format: 'email'},
+              password: {type: 'string', minLength: 8},
+            },
+          },
+        },
+      },
+    })
+    newUserRequest: Credentials,
+  ): Promise<User> {
+    // check if user is admin by checking the role from the token
+    if (currentUserProfile) {
+      const userId = currentUserProfile[securityId];
+      const currentUser = await this.userRepository.findById(userId);
+      if (currentUser.role !== UserRole.Admin) {
+        throw new HttpErrors.Unauthorized(
+          'You are not authorized to create an agency user',
+        );
+      }
+    }
+    newUserRequest.role = 'agency';
+    // ensure a valid email value and password value
+    validateCredentials(_.pick(newUserRequest, ['email', 'password']));
+
+    // encrypt the password
+    const password = await this.passwordHasher.hashPassword(
+      newUserRequest.password,
+    );
+
+    const tx = await this.userRepository.dataSource.beginTransaction(
+      IsolationLevel.READ_COMMITTED,
+    );
+
+    try {
+      // create the new user
+      const savedUser = await this.userRepository.create(
+        _.omit(newUserRequest, 'password'),
+        {
+          transaction: tx,
+        },
+      );
+
+      // set the password
+      await this.userRepository.userCredentials(savedUser.id).create(
+        {password},
+        {
+          transaction: tx,
+        },
+      );
+
+      await tx.commit();
+      return savedUser;
+    } catch (error) {
+      // PostgreSQL unique_violation error
+      if (error.code === '23505' && error.message.includes('uniqueEmail')) {
         throw new HttpErrors.Conflict('Email value is already taken');
       } else {
         throw error;
@@ -201,8 +299,8 @@ export class UserController {
 
       return savedUser;
     } catch (error) {
-      // MongoError 11000 duplicate key
-      if (error.code === 11000 && error.errmsg.includes('index: uniqueEmail')) {
+      // PostgreSQL unique_violation error
+      if (error.code === '23505' && error.message.includes('uniqueEmail')) {
         throw new HttpErrors.Conflict('Email value is already taken');
       } else {
         throw error;
@@ -297,6 +395,9 @@ export class UserController {
 
     // convert a User object into a UserProfile object (reduced set of properties)
     const userProfile = this.userService.convertToUserProfile(user);
+
+    userProfile.role = user.role;
+    userProfile.email = user.email;
 
     // create a JSON Web Token based on the user profile
     const token = await this.jwtService.generateToken(userProfile);
