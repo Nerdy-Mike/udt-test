@@ -20,7 +20,6 @@ import {
   JWTAuthenticationComponent,
   UserServiceBindings,
   TokenServiceConstants,
-  JWTService,
   RefreshTokenServiceBindings,
 } from '@loopback/authentication-jwt';
 
@@ -28,6 +27,7 @@ import {PostgresDbDataSource} from './datasources';
 
 import {MySequence} from './sequence';
 import {PasswordHasherBindings} from './keys';
+import {JWTService} from './services';
 import {BcryptHasher} from './services';
 import {JWTAuthenticationStrategy} from './authentication-strategies/jwt-strategy';
 

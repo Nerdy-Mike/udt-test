@@ -1,8 +1,9 @@
 import {inject} from '@loopback/context';
 import {HttpErrors, Request} from '@loopback/rest';
-import {AuthenticationStrategy, TokenService} from '@loopback/authentication';
+import {AuthenticationStrategy} from '@loopback/authentication';
 import {UserProfile} from '@loopback/security';
 
+import {JWTService} from '../services/jwt.service';
 import {TokenServiceBindings} from '../keys';
 
 export class JWTAuthenticationStrategy implements AuthenticationStrategy {
@@ -10,7 +11,7 @@ export class JWTAuthenticationStrategy implements AuthenticationStrategy {
 
   constructor(
     @inject(TokenServiceBindings.TOKEN_SERVICE)
-    public tokenService: TokenService,
+    public tokenService: JWTService,
   ) {}
 
   async authenticate(request: Request): Promise<UserProfile | undefined> {

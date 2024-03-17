@@ -55,7 +55,7 @@ export class JWTService implements TokenService {
     }
     const userInfoForToken = {
       id: userProfile[securityId],
-      name: userProfile.name,
+      email: userProfile.email,
       role: userProfile.role,
       publicAddress: userProfile.publicAddress,
     };

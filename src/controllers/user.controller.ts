@@ -16,11 +16,7 @@ import {
 import {User} from '../models';
 import {Credentials, UserRepository} from '../repositories';
 import {inject} from '@loopback/core';
-import {
-  authenticate,
-  TokenService,
-  UserService,
-} from '@loopback/authentication';
+import {authenticate, UserService} from '@loopback/authentication';
 import {authorize} from '@loopback/authorization';
 import {SecurityBindings, securityId, UserProfile} from '@loopback/security';
 import {UserProfileSchema} from './specs/user-controller.specs';
@@ -38,6 +34,8 @@ import {
   RefreshTokenServiceBindings,
 } from '@loopback/authentication-jwt';
 import {UserRole} from '../constants/role';
+
+import {JWTService} from '../services';
 
 @model()
 export class NewUserRequest extends User {
@@ -79,7 +77,7 @@ export class UserController {
     @inject(PasswordHasherBindings.PASSWORD_HASHER)
     public passwordHasher: PasswordHasher,
     @inject(TokenServiceBindings.TOKEN_SERVICE)
-    public jwtService: TokenService,
+    public jwtService: JWTService,
     @inject(RefreshTokenServiceBindings.REFRESH_TOKEN_SERVICE)
     public refreshTokenService: RefreshTokenService,
     @inject(UserServiceBindings.USER_SERVICE)
