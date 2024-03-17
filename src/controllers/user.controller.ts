@@ -14,7 +14,11 @@ import {
   SchemaObject,
 } from '@loopback/rest';
 import {User} from '../models';
-import {Credentials, UserRepository} from '../repositories';
+import {
+  Credentials,
+  TransactionRepository,
+  UserRepository,
+} from '../repositories';
 import {inject} from '@loopback/core';
 import {authenticate, UserService} from '@loopback/authentication';
 import {authorize} from '@loopback/authorization';
@@ -74,6 +78,8 @@ const RefreshGrantRequestBody = {
 export class UserController {
   constructor(
     @repository(UserRepository) public userRepository: UserRepository,
+    @repository(TransactionRepository)
+    public transactionRepository: TransactionRepository,
     @inject(PasswordHasherBindings.PASSWORD_HASHER)
     public passwordHasher: PasswordHasher,
     @inject(TokenServiceBindings.TOKEN_SERVICE)
@@ -452,5 +458,30 @@ export class UserController {
     @requestBody(RefreshGrantRequestBody) refreshGrant: RefreshGrant,
   ): Promise<TokenObject> {
     return this.refreshTokenService.refreshToken(refreshGrant.refreshToken);
+  }
+
+  @get('/users/transactions/{userId}', {
+    responses: {
+      '200': {
+        description: 'User',
+        content: {
+          'application/json': {
+            schema: {
+              'x-ts-type': User,
+            },
+          },
+        },
+      },
+    },
+  })
+  @authenticate('jwt')
+  @authorize({
+    allowedRoles: [UserRole.Admin, UserRole.Agency, UserRole.User],
+    voters: [basicAuthorization],
+  })
+  async findUserTransactions(
+    @param.path.string('userId') userId: string,
+  ): Promise<User> {
+    return this.userRepository.findById(userId);
   }
 }

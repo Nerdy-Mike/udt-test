@@ -18,14 +18,14 @@ import {
   response,
   HttpErrors,
 } from '@loopback/rest';
-import {Product} from '../models';
-import {ProductRepository} from '../repositories';
-import {authenticate} from '@loopback/authentication';
-import {authorize} from '@loopback/authorization';
-import {basicAuthorization} from '../middlewares/auth.midd';
 import {inject} from '@loopback/core';
+import {authorize} from '@loopback/authorization';
+import {authenticate} from '@loopback/authentication';
 import {SecurityBindings, UserProfile, securityId} from '@loopback/security';
 
+import {Product} from '../models';
+import {ProductRepository} from '../repositories';
+import {basicAuthorization} from '../middlewares/auth.midd';
 export class ProductController {
   constructor(
     @repository(ProductRepository)

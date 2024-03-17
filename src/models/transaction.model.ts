@@ -20,6 +20,19 @@ export class Transaction extends Entity {
   customerId: string;
 
   @property({
+    type: 'array',
+    itemType: 'object',
+    postgresql: {
+      dataType: 'jsonb',
+    },
+  })
+  items?: {
+    productId: string;
+    quantity: number;
+    finalPrice: number;
+  }[];
+
+  @property({
     type: 'string',
     required: true,
   })
@@ -28,6 +41,9 @@ export class Transaction extends Entity {
   @property({
     type: 'number',
     required: true,
+    postgresql: {
+      dataType: 'numeric',
+    },
   })
   totalAmount: number;
 

@@ -20,6 +20,19 @@ export class Cart extends Entity {
   customerId: string;
 
   @property({
+    type: 'array',
+    itemType: 'object',
+    postgresql: {
+      dataType: 'jsonb',
+    },
+  })
+  items?: {
+    productId: string;
+    quantity: number;
+  }[];
+
+
+  @property({
     type: 'date',
   })
   createAt?: string;
