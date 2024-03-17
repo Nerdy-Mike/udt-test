@@ -17,7 +17,6 @@ export async function basicAuthorization(
   if (authorizationCtx.principals.length > 0) {
     const user = _.pick(authorizationCtx.principals[0], ['id', 'name', 'role']);
 
-    console.log('user', user);
     currentUser = {[securityId]: user.id, name: user.name, role: user.role};
   } else {
     return AuthorizationDecision.DENY;

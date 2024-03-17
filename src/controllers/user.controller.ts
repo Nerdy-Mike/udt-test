@@ -329,6 +329,27 @@ export class UserController {
     return this.userRepository.findById(userId);
   }
 
+  @get('/users/agency/{userId}', {
+    responses: {
+      '200': {
+        description: 'User',
+        content: {
+          'application/json': {
+            schema: {
+              'x-ts-type': User,
+            },
+          },
+        },
+      },
+    },
+  })
+  @authenticate('jwt')
+  async findAgencyById(
+    @param.path.string('userId') userId: string,
+  ): Promise<User> {
+    return this.userRepository.findById(userId);
+  }
+
   @get('/users/me', {
     responses: {
       '200': {
