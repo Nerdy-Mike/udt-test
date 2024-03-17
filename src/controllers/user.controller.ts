@@ -1,6 +1,13 @@
 import {model, property, repository} from '@loopback/repository';
 import {PasswordHasher, validateCredentials} from '../services';
-import {get, HttpErrors, param, post, requestBody} from '@loopback/rest';
+import {
+  get,
+  HttpErrors,
+  param,
+  post,
+  requestBody,
+  SchemaObject,
+} from '@loopback/rest';
 import {User} from '../models';
 import {Credentials, UserRepository} from '../repositories';
 import {inject} from '@loopback/core';
@@ -20,6 +27,11 @@ import {
 } from '../keys';
 import _ from 'lodash';
 import {basicAuthorization} from '../middlewares/auth.midd';
+import {
+  TokenObject,
+  RefreshTokenService,
+  RefreshTokenServiceBindings,
+} from '@loopback/authentication-jwt';
 
 @model()
 export class NewUserRequest extends User {
@@ -30,6 +42,31 @@ export class NewUserRequest extends User {
   password: string;
 }
 
+// Describes the type of grant object taken in by method "refresh"
+type RefreshGrant = {
+  refreshToken: string;
+};
+
+// Describes the schema of grant object
+const RefreshGrantSchema: SchemaObject = {
+  type: 'object',
+  required: ['refreshToken'],
+  properties: {
+    refreshToken: {
+      type: 'string',
+    },
+  },
+};
+
+// Describes the request body of grant object
+const RefreshGrantRequestBody = {
+  description: 'Reissuing Acess Token',
+  required: true,
+  content: {
+    'application/json': {schema: RefreshGrantSchema},
+  },
+};
+
 export class UserController {
   constructor(
     @repository(UserRepository) public userRepository: UserRepository,
@@ -37,6 +74,8 @@ export class UserController {
     public passwordHasher: PasswordHasher,
     @inject(TokenServiceBindings.TOKEN_SERVICE)
     public jwtService: TokenService,
+    @inject(RefreshTokenServiceBindings.REFRESH_TOKEN_SERVICE)
+    public refreshTokenService: RefreshTokenService,
     @inject(UserServiceBindings.USER_SERVICE)
     public userService: UserService<User, Credentials>,
   ) {}
@@ -252,7 +291,7 @@ export class UserController {
       },
     })
     credentials: Credentials,
-  ): Promise<{token: string}> {
+  ): Promise<TokenObject> {
     // ensure the user exists, and the password is correct
     const user = await this.userService.verifyCredentials(credentials);
 
@@ -262,6 +301,36 @@ export class UserController {
     // create a JSON Web Token based on the user profile
     const token = await this.jwtService.generateToken(userProfile);
 
-    return {token};
+    const tokens = await this.refreshTokenService.generateToken(
+      userProfile,
+      token,
+    );
+
+    return tokens;
+  }
+
+  @post('/users/refresh-token', {
+    responses: {
+      '200': {
+        description: 'Token',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                token: {
+                  type: 'string',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  })
+  async refreshToken(
+    @requestBody(RefreshGrantRequestBody) refreshGrant: RefreshGrant,
+  ): Promise<TokenObject> {
+    return this.refreshTokenService.refreshToken(refreshGrant.refreshToken);
   }
 }

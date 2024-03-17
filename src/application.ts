@@ -21,6 +21,7 @@ import {
   UserServiceBindings,
   TokenServiceConstants,
   JWTService,
+  RefreshTokenServiceBindings,
 } from '@loopback/authentication-jwt';
 
 import {PostgresDbDataSource} from './datasources';
@@ -70,6 +71,17 @@ export class BeApplication extends BootMixin(
     this.component(AuthorizationComponent);
     this.component(JWTAuthenticationComponent);
     this.dataSource(PostgresDbDataSource, UserServiceBindings.DATASOURCE_NAME);
+    this.dataSource(
+      PostgresDbDataSource,
+      RefreshTokenServiceBindings.DATASOURCE_NAME,
+    );
+
+    this.bind(TokenServiceBindings.TOKEN_SECRET).to(
+      process.env.JWT_APP_SECRET as string,
+    );
+    this.bind(RefreshTokenServiceBindings.REFRESH_SECRET).to(
+      process.env.JWT_REFRESH_SECRET as string,
+    );
 
     this.setUpBindings();
     this.add(createBindingFromClass(JWTAuthenticationStrategy));
