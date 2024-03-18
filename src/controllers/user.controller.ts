@@ -128,21 +128,29 @@ export class UserController {
     // ensure a valid email value and password value
     validateCredentials(_.pick(newUserRequest, ['email', 'password']));
 
-    // encrypt the password
-    const password = await this.passwordHasher.hashPassword(
-      newUserRequest.password,
+    const tx = await this.userRepository.dataSource.beginTransaction(
+      IsolationLevel.READ_COMMITTED,
     );
-
     try {
+      const password = await this.passwordHasher.hashPassword(
+        newUserRequest.password,
+      );
       // create the new user
       const savedUser = await this.userRepository.create(
         _.omit(newUserRequest, 'password'),
+        {
+          transaction: tx,
+        },
       );
 
       // set the password
-      await this.userRepository
-        .userCredentials(savedUser.id)
-        .create({password});
+      await this.userRepository.userCredentials(savedUser.id).create(
+        {password},
+        {
+          transaction: tx,
+        },
+      );
+      await tx.commit();
 
       return savedUser;
     } catch (error) {
@@ -261,6 +269,11 @@ export class UserController {
       },
     },
   })
+  @authenticate('jwt')
+  @authorize({
+    allowedRoles: [UserRole.Admin],
+    voters: [basicAuthorization],
+  })
   async createAdmin(
     @requestBody({
       description: 'Credentials',
@@ -289,18 +302,28 @@ export class UserController {
     const password = await this.passwordHasher.hashPassword(
       newUserRequest.password,
     );
+    const tx = await this.userRepository.dataSource.beginTransaction(
+      IsolationLevel.READ_COMMITTED,
+    );
 
     try {
       // create the new user
       const savedUser = await this.userRepository.create(
         _.omit(newUserRequest, 'password'),
+        {
+          transaction: tx,
+        },
       );
 
       // set the password
-      await this.userRepository
-        .userCredentials(savedUser.id)
-        .create({password});
+      await this.userRepository.userCredentials(savedUser.id).create(
+        {password},
+        {
+          transaction: tx,
+        },
+      );
 
+      await tx.commit();
       return savedUser;
     } catch (error) {
       // PostgreSQL unique_violation error
