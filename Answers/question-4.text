@@ -1,0 +1,13 @@
+Strengths:
+
+Normalized Design: The ERD follows normalization principles, which helps reduce data redundancy, minimize data anomalies, and maintain data integrity.
+Separation of Concerns: The design separates concerns into distinct entities, such as Customer, Agency, Transaction, and Product, promoting modularity and maintainability.
+Scalability: The structure allows for future growth and expansion by separating entities and avoiding data duplication
+Relationships and Constraints: The use of primary keys, foreign keys, and relationships (one-to-many, many-to-many) ensures data integrity and enforces referential constraints.
+
+
+Weaknesses:
+No Audit Trail or Logging: The current design does not include entities or attributes for tracking changes or maintaining an audit trail, which may be necessary for some applications.
+No Caching or Performance Optimization: The ERD does not address potential performance bottlenecks or caching strategies, which may be required for high-traffic or data-intensive applications.
+No Denormalization Considerations: The design follows strict normalization principles, but in some cases, denormalization techniques might be necessary to improve query performance or simplify certain operations.
+- Log out: we are using jwt, which is stateless, so we can’t directly invalid the token, but we can implement blacklist feature, typically with redis because we can access it fas:t.

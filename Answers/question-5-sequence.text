@@ -1,0 +1,59 @@
+Participant Application
+Participant ThirdPartyAPI
+Participant Database
+Participant CacheService
+
+Application->CacheService: Check if cached data is valid
+alt Cached data is valid
+    CacheService-->Application: Return cached data
+else Cached data is invalid or expired
+    Application->ThirdPartyAPI: Request product data
+    ThirdPartyAPI-->Application: Product data response
+
+    Application->Application: Parse product data
+
+    loop For each product
+        Application->Database: Check if product exists
+        alt Product exists
+            Application->Database: Update product data
+        else Product does not exist
+            Application->Database: Insert new product
+        end
+    end
+
+    Database-->Application: Success/Failure response
+    Application->CacheService: Store parsed data in cache
+end
+
+Application->Application: Handle response
+
+
+
+
+Explanation:
+
+The application first checks with the CacheService if the cached product data is still valid. The validity could be determined based on a configurable time-to-live (TTL) or an expiration timestamp.
+If the cached data is valid, the CacheService returns the cached data to the application, skipping the API call and database operations.
+If the cached data is invalid or has expired, the application sends a request to the third-party API to fetch the latest product data.
+The third-party API responds with the updated product data.
+The application parses the received product data.
+For each product in the parsed data:
+The application checks if the product already exists in the database.
+If the product exists, the application updates the product data in the database.
+If the product does not exist, the application inserts the new product data into the database.
+The database responds with a success or failure message for each insert or update operation.
+After processing all the products, the application stores the parsed data in the CacheService for future use.
+The application handles the response from the database and the CacheService (e.g., logs errors, updates internal state, etc.).
+
+
+Strengths:
+
+Caching Implementation: The diagram includes a caching mechanism to improve performance by avoiding unnecessary API calls and database operations when the data is still valid.
+Data Synchronization: The solution ensures that the database remains up-to-date with the latest product data from the third-party API, which is essential when the API data changes frequently (every hour in this case).
+Efficient Data Processing: The solution checks for existing products before inserting or updating, reducing redundant operations and improving overall efficiency.
+Modular Design: The steps are separated into distinct actions, making it easier to modify or extend specific parts of the solution as needed.
+
+Weaknesses:
+Potential Performance Bottlenecks: Checking the existence of each product in the database one by one can be inefficient, especially when dealing with large datasets. This approach may lead to performance bottlenecks.
+No Concurrency Control: The solution does not address concurrency issues that may arise when multiple processes or threads attempt to update the same product data simultaneously.
+No Error Handling: The diagram does not explicitly show how errors or exceptions should be handled during the process, which is crucial for ensuring data integrity and system reliability.

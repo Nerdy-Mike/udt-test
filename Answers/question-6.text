@@ -1,0 +1,50 @@
+┌───────────────────────────────────────────────────────────────────────────────┐
+│                                                                               │
+│                                  Third-Party API                              │
+│                                                                               │
+└─────────────────────────────────────┬─────────────────────────────────────────┘
+                                      │
+                                      │
+┌─────────────────────────────────────┼───────────────────────────────────────────┐
+│                                     ▼                                            │
+│                          ┌─────────────────────────┐                            │
+│                          │    API Gateway Service  │                            │
+│                          └─────────────────────────┘                            │
+│                                        │                                        │
+│                                        │                                        │
+│  ┌──────────────────────────────┬──────┴──────────────────────────────┐         │
+│  │                              │                                      │         │
+│  │                              ▼                                      ▼         │
+│  │              ┌─────────────────────────────────┐  ┌─────────────────────────┐│
+│  │              │     Development Environment     │  │    Production Environment││
+│  │              │                                 │  │                         ││
+│  │              │ ┌─────────────────────────────┐ │  │ ┌─────────────────────┐││
+│  │              │ │    Development Database     │ │  │ │ Production Database │││
+│  │              │ └─────────────────────────────┘ │  │ └─────────────────────┘││
+│  │              │                                 │  │                         ││
+│  │              │ ┌─────────────────────────────┐ │  │ ┌─────────────────────┐││
+│  │              │ │   Development API Services  │ │  │ │Production API Services││
+│  │              │ └─────────────────────────────┘ │  │ └─────────────────────┘││
+│  │              └─────────────────────────────────┘  └─────────────────────────┘│
+│  │                                                                                │
+└──────────────────────────────────────────────────────────────────────────────────
+
+
+
+Explanation:
+
+Third-Party API: This represents the external API from which product data is fetched.
+API Gateway Service: This service acts as an entry point for all incoming requests. It routes the requests to the appropriate environment (development or production) based on predefined rules or configurations.
+Development Environment:
+Development Database: This is a separate database instance used for development purposes, isolated from the production data.
+Development API Services: These are the API services running in the development environment, interacting with the development database.
+Production Environment:
+Production Database: This is the database instance used for storing and managing production data, isolated from the development data.
+Production API Services: These are the API services running in the production environment, interacting with the production database.
+
+
+How it works:
+When a request comes in from the third-party API, it is routed through the API Gateway Service.
+The API Gateway Service determines whether the request should be forwarded to the development or production environment based on predefined rules or configurations (e.g., different URLs, headers, or authentication mechanisms).
+If the request is intended for the development environment, it is routed to the corresponding Development API Services, which interact with the Development Database.
+If the request is intended for the production environment, it is routed to the corresponding Production API Services, which interact with the Production Database.┘
